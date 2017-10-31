@@ -9,43 +9,70 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 
 ```{r}
 ceodata <- read.csv('ceo.csv')
+ceodata$X <- NULL
 salary <- ceodata$salary
-plot(salary)
+head(ceodata)
 ```
 
-1.a)
+# 1
+### 1.a
+
 ```{r}
 mean(salary)
 ```
-```{r}
-median(salary)
-```
+Mean(2027.517) - average salary.
 
 ```{r}
 mean.default(salary, trim=0.1)
 ```
+Trimmed mean(1710.092) - mean of salaries without lowest 10% and highest 10% of values.  
+Used to eliminate the impact of vary large or very small salaries on the mean.
+
+```{r}
+median(salary)
+```
+Median(1600) - central salary. Half of salaries are smaller than median and half are larger.
+
 
 ```{r}
 quantile(salary, c(0.25, 0.75))
 ```
+Lower quartile(1084.0) - 25% of salaries are smaller than lower quartile (consequently 75% are larger)  
+Upper quartile(2347.5) - 75% of salaries are smaller than upper quartile (consequently 25% are larger)
 
 
 ```{r}
 quantile(salary, c(0.1,0.9))
 ```
+Lower quartile(750.0) - 10% of salaries are smaller than lower quartile (consequently 90% are larger)  
+Upper quartile(3384.4) - 90% of salaries are smaller than upper quartile (consequently 10% are larger)
 
-1.b
+
+
+### 1.b
+
 ```{r}
 Fn <- ecdf(salary)
-Fn(1000)
-```
-```{r}
 plot(Fn)
-Fn(1000)
-1 - Fn(5000)
+```
+Empirical cumulative distribution function of salaries
+
+```{r}
 quantile(salary, c(0.2))
 quantile(salary, c(0.8))
+Fn(1000)
+1 - Fn(5000)
 ```
+*
+  $F^{-1}(0.2)=976.2$ - 20% of CEOs have at most $976.2 salary.  
+  $F^{-1}(0.8)=2613$ - 80% of CEOs have at most $2613 salary.
+
+*
+  $F(1000)=0.223$ - 22.3% of CEOs have at most $1000 salary.  
+  $1 - F(5000)=0.053$ - 5.3% of CEOs have at least $5000 salary.
+
+
+### 1.c
 
 ```{r}
 hist(salary)
