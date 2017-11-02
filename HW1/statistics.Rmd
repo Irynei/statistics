@@ -274,12 +274,14 @@ boxplot(list)
 ```
 ### 1b
 
+https://irynei.shinyapps.io/boxplot_animation/
+https://irynei.shinyapps.io/hist_animation/
+
 ```{r}
-
-library(animation)
-
-set.seed(15)
-simulated <- rnorm(50, 10, 9)
+# library(animation)
+# 
+# set.seed(15)
+# simulated <- rnorm(50, 10, 9)
 
 # saveGIF({
 #   for(i in 10:100){
