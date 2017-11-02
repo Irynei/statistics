@@ -175,11 +175,56 @@ plot(ecdf(salary[which(ceodata$age > 50)]), col="darkolivegreen3", main="Salary 
 plot(ecdf(salary[which(ceodata$age < 50)]), add=T, col="tomato")
 
 ```
+
+# 3
+
+### 3.a
+
 ```{r}
-s1 = salary[which(salary<2000)]
-s2 = salary[which(salary>=2000 & salary < 4000)]
-s3 = salary[which(salary>=4000)]
-a1 = ceodata$age[which(ceodata$age < 50)]
-a2 = ceodata$age[which(ceodata$age >= 50)]
+
+grouped_data = data.frame(salary=ceodata$salary, age=ceodata$age)
+
+grouped_data$age = ifelse(grouped_data$age < 50, "a1", "a2")
+grouped_data$salary[as.integer(grouped_data$salary) < 2000] <- "s1"
+grouped_data$salary[as.integer(grouped_data$salary) >= 2000 & as.integer(grouped_data$salary) < 4000] <- "s2"
+grouped_data$salary[as.integer(grouped_data$salary) >= 4000] <- "s3"
+```
+
+```{r}
+con_table <- xtabs(~age+salary, data=grouped_data)
+addmargins(con_table)
+```
+
+```{r}
+con_table <- xtabs(~age+salary, data=grouped_data)
+addmargins(con_table / nrow(grouped_data))
+```
+### 3b
+
+
+### 3c
+```{r}
+con_table <- xtabs(~age+salary, data=grouped_data)
+chisq.test(con_table)
+```
+
+# 2 Problem
+
+# 1
+
+```{r}
+set.seed(15)
+simulated <- rnorm(50, 10, 9)
+norlmal <- rnorm(5000, 10, 9)
+hist(norlmal, col="darkolivegreen3")
+hist(simulated, col="tomato", add=T)
+
+density(simulated)
+```
+
+```{r}
+a <- dt(x = sample(50), df=5)
+a <- 10 + 3 * sqrt(3 / 5) * a
+hist(a)
 ```
 
