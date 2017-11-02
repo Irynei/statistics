@@ -1,22 +1,22 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Statistics | HW1"
+output:
+  html_document:
+    df_print: paged
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
 ```{r}
+# data preprocessing
 ceodata <- read.csv('ceo.csv')
 ceodata$X <- NULL
 salary <- ceodata$salary
 head(ceodata)
 ```
+# Problem 1
 
-# 1
-### 1.a
+## Task 1
 
+### 1a
 ```{r}
 mean(salary)
 ```
@@ -26,7 +26,7 @@ Mean(2027.517) - average salary.
 mean.default(salary, trim=0.1)
 ```
 Trimmed mean(1710.092) - mean of salaries without lowest 10% and highest 10% of values.  
-Used to eliminate the impact of vary large or very small salaries on the mean called outliers.
+Used to eliminate the impact of very large or very small salaries(called outliers) on the mean.
 
 ```{r}
 median(salary)
@@ -44,18 +44,19 @@ Upper quartile(2347.5) - 75% of salaries are smaller than upper quartile (conseq
 ```{r}
 quantile(salary, c(0.1,0.9))
 ```
-Lower quartile(750.0) - 10% of salaries are smaller than lower quartile (consequently 90% are larger)  
-Upper quartile(3384.4) - 90% of salaries are smaller than upper quartile (consequently 10% are larger)
+Lower 10%-quantile(750.0) - 10% of salaries are smaller than lower quartile (consequently 90% are larger)  
+Upper 10%-quantile(3384.4) - 90% of salaries are smaller than upper quartile (consequently 10% are larger)
 
 
 
-### 1.b
+### 1b
 
 ```{r}
 Fn <- ecdf(salary)
 plot(Fn)
 ```
-Empirical cumulative distribution function of salaries
+
+Empirical cumulative distribution function of salaries.
 
 ```{r}
 quantile(salary, c(0.2))
@@ -72,81 +73,91 @@ Fn(1000)
   $1 - \hat{F}(5000)=0.053$ - 5.3% of CEOs have at least $5000 salary.
 
 
-### 1.c
+
+### 1c
 
 ```{r}
 hist(salary, col="darkolivegreen3")
 ```
-
 ```{r}
-boxplot(salary)
+boxplot(salary, main="Boxplot of salary")
 ```
-box plot
 
-right skewed distributions  
-
-* the mean is meaningful only for symmetric data. this data is not symmetric
-* The median can also be used to characterize asymmetric data.
-* the interquartile range is robust to outliers
-* There are at least [n/2] of all observations in the interval [˜x0.25, x˜0.75]
-
-
+As we can see from histogram and boxplot, salary distribution is not symmetric.  
+Location measures:  
+**mean** is very sensitive to outliers and therefore meaningful only for symmetric data - not appropriate here.  
+**trimmed mean** is much more robust to outliers compared to the simple mean - appropriate here.  
+**median** is not as strongly influenced by outliers as mean - appropriate here.  
+**the interquartile range** is also robust to outliers. There are at least [n/2] of all observations in the interval - appropriate here.  
 
 
 ```{r}
-library(ggplot2)
-p <- ggplot(ceodata["salary"], aes(x=salary, y=salary)) + geom_violin()
-p
-```
-violin-plot
+library(moments)
+skewness(salary)
 
-### 1.d
+```
+As a measure of symmetry we can use skewness.
+If skewness is larger than zero, then the distribution is right-skewed, therefor salary distribution is right-skewed.
+
+
+
+### 1d
 ```{r}
 hist(salary, col="darkolivegreen3")
 ```
+
 Histogram of salary. Default formula to compute number of bars is Sturges' formula (${\displaystyle k=\lceil \log _{2}n\rceil +1\,}$)  
 For salary data $n = `r length(salary)`$, ${\displaystyle k=\lceil \log _{2}`r length(salary)`\rceil +1 = 10\,}$.
+
+
 ```{r}
 hist(salary, breaks=4, col="darkolivegreen3")
 ```
+
 Too rough histogram with only 4 bars.
 
 ```{r}
-hist(salary, breaks=600, col="darkolivegreen3")
+hist(salary, breaks=1000, col="darkolivegreen3")
 ```
-Too detailed histagram with 600 bars.
+
+Too detailed histogram with 1000 bars.
+
+We can see that too detailed histogram shows too much individual data and we can't clearly see the underlying pattern.
+On the other hand, too rough histogram has only 4 bars and again we are unable to find underlying pattern in the data.
+
+
+
+### 1e
+```{r}
+hist(salary, col="darkolivegreen3")
+hist(log(salary), col="tomato", main="Histogram of ln(salary)")
+```
+
 
 ```{r}
-a = data.frame(salary=salary)
-a$veg = "salary"
-b = data.frame(salary = log(salary))
-b$veg = "ln salary"
-ab <- rbind(a, b)
-ggplot(ab, aes(salary, fill = veg)) + geom_histogram(alpha = 0.5, position ='identity')
+boxplot(salary, main="Boxplot of salary",col="darkolivegreen3")
 ```
-
-
-### 1.e
-```{r}
-hist(log(salary), col="darkolivegreen3")
-```
-hist of ln(salary)
 
 ```{r}
-boxplot(log(salary))
+boxplot(log(salary),main="Boxplot of ln(salary)", col="tomato")
 ```
-boxplot of ln(salary). We can see that this is almost symmetric distribution
+
+Boxplot of ln(salary). We can see that this is almost symmetric distribution.
+
 
 ```{r}
 mean(log(salary))
 median(log(salary))
 ```
-mean and median of ln(salary). We can see that mean is pretty much the same as median
+Mean and median of ln(salary).  
+In a symmetric distribution, the mean and median fall at the same point.
+As we can see mean is pretty much the same as median.
 
-# 2
 
 
-### 2.a
+## Task 2
+
+### 2a
 
 
 ```{r}
@@ -156,8 +167,11 @@ pearson_correlations = cor(ceodata, method="pearson")
 qplot(x=Var1, y=Var2, data=melt(pearson_correlations), fill=value, geom="tile") + scale_fill_gradient(low = "white", high = "red")
 ```
 
+
+
+### 2b
 ```{r}
-pairs(~salary + totcomp + tenure + age + sales + profits + assets, data=ceodata, main="Simple Scatterplot Matrix")
+pairs(~salary + totcomp + tenure + age + sales + profits + assets, data=ceodata, main="CEO Scatterplot Matrix")
 ```
 
 ```{r}
@@ -166,38 +180,45 @@ qplot(x=Var1, y=Var2, data=melt(spearman_correlation), fill=value, geom="tile") 
 
 ```
 
+
+
+### 2c
+
 ```{r}
 hist(salary[which(ceodata$age > 50)],  col="darkolivegreen3", main="Age>50 and Age<50 Histograms Of Salary", xlab = "Salary")
 hist(salary[which(ceodata$age < 50)],  col="tomato", add=T)
+legend("topright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=5)
 ```
+
 ```{r}
 plot(ecdf(salary[which(ceodata$age > 50)]), col="darkolivegreen3", main="Salary ECDF for Age>50 and Age<50")
 plot(ecdf(salary[which(ceodata$age < 50)]), add=T, col="tomato")
+legend("bottomright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=5)
 ```
 
-# 3
+## 3 Task
 
-### 3.a
-
+### 3a
 ```{r}
-
 grouped_data = data.frame(salary=ceodata$salary, age=ceodata$age)
-
+# group data by categories 
 grouped_data$age = ifelse(grouped_data$age < 50, "a1", "a2")
-grouped_data$salary[as.integer(grouped_data$salary) < 2000] <- "s1"
-grouped_data$salary[as.integer(grouped_data$salary) >= 2000 & as.integer(grouped_data$salary) < 4000] <- "s2"
-grouped_data$salary[as.integer(grouped_data$salary) >= 4000] <- "s3"
+grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary)) < 2000] <- "s1"
+grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary) >= 2000) & suppressWarnings(as.integer(grouped_data$salary)) < 4000] <- "s2"
+grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary)) >= 4000] <- "s3"
 ```
-
 ```{r}
 con_table <- xtabs(~age+salary, data=grouped_data)
 addmargins(con_table)
 ```
+Contigency table with absolute frequencies.
 
 ```{r}
 con_table <- xtabs(~age+salary, data=grouped_data)
 addmargins(con_table / nrow(grouped_data))
 ```
+Contigency table with relative frequencies.
+
 ### 3b
 
 
@@ -212,15 +233,18 @@ chisq.test(con_table)
 ## Task 1
 
 ### 1a
+
 ```{r}
 set.seed(15)
 simulated <- rnorm(50, 10, 9)
-norlmal <- rnorm(1000, 10, 9)
-hist(norlmal, col="darkolivegreen3")
+normal <- rnorm(500000, 10, 9)
+hist(normal, col="darkolivegreen3")
 hist(simulated, col="tomato", add=T)
 
-density(simulated)
-density(norlmal)
+skewness(normal)
+a = density(simulated)
+plot(density(normal), col="darkolivegreen3")
+# lines(a, col="tomato")
 ```
 
 ```{r}
@@ -290,8 +314,8 @@ v <- rnorm(50, 0, 1)
 p <- 0.7
 
 v <- p*u + sqrt(1 - p * p) * v
-hui = 
-cor(, method="pearson"))
+
+
 ```
 
 
