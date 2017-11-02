@@ -173,7 +173,6 @@ hist(salary[which(ceodata$age < 50)],  col="tomato", add=T)
 ```{r}
 plot(ecdf(salary[which(ceodata$age > 50)]), col="darkolivegreen3", main="Salary ECDF for Age>50 and Age<50")
 plot(ecdf(salary[which(ceodata$age < 50)]), add=T, col="tomato")
-
 ```
 
 # 3
@@ -210,21 +209,118 @@ chisq.test(con_table)
 
 # 2 Problem
 
-# 1
+## Task 1
 
+### 1a
 ```{r}
 set.seed(15)
 simulated <- rnorm(50, 10, 9)
-norlmal <- rnorm(5000, 10, 9)
+norlmal <- rnorm(1000, 10, 9)
 hist(norlmal, col="darkolivegreen3")
 hist(simulated, col="tomato", add=T)
 
 density(simulated)
+density(norlmal)
 ```
 
 ```{r}
 a <- dt(x = sample(50), df=5)
 a <- 10 + 3 * sqrt(3 / 5) * a
 hist(a)
+density(a)
 ```
 
+
+```{r}
+set.seed(15)
+simulated <- rnorm(50, 10, 9)
+list <- c(simulated)
+p <- 49
+for (i in 0:49){
+  list = c(list, 16 + i * (24 - 16)/p)
+}
+mean(simulated)
+mean(list)
+median(simulated)
+median(list)
+var(simulated)
+var(list)
+boxplot(simulated)
+boxplot(list)
+```
+### 1b
+
+```{r}
+
+library(animation)
+
+set.seed(15)
+simulated <- rnorm(50, 10, 9)
+
+# saveGIF({
+#   for(i in 10:100){
+#     distribution = c(simulated, rnorm(i, 20, 4))
+#     hist(distribution)
+#     abline(v = mean(distribution),col = "royalblue",lwd = 2)
+#     abline(v = median(distribution),col = "red",lwd = 2)
+#     legend("topright", legend = c(i, "mean", "median"), fill = c("white", "royalblue", "red"), bty = "n")
+#       }
+# }, movie.name = "hist.gif", interval = 1, ani.width = 550, ani.height = 350)
+
+
+# saveGIF({
+#   for(i in 10:100){
+#     boxplot(c(simulated, rnorm(i, 20, 4)))
+#     legend("topright", legend = c(i), fill = c("red"), bty = "n")
+#       }
+# }, movie.name = "boxplot.gif", interval = 1, ani.width = 550, ani.height = 350)
+
+
+# u <- rnorm(50, 0, 1)
+# v <- rnorm(50, 0, 1)
+# p <- 0.7
+# v <- p*u + sqrt(1 - p * p) * v
+```
+
+
+```{r}
+u <- rnorm(50, 0, 1)
+set.seed(10)
+v <- rnorm(50, 0, 1)
+p <- 0.7
+
+v <- p*u + sqrt(1 - p * p) * v
+hui = 
+cor(, method="pearson"))
+```
+
+
+
+
+
+
+
+
+
+
+$$ 
+U \sim N(0,1),\ V \sim N(0,1), \\
+U^*=U, V^*=\rho U + \sqrt{1-\rho^2} V
+$$
+
+Why?
+
+$$ 
+Var(X) = E[X^2] - E[X]^2 \\
+E[X^2]=Var(X) + E[X]^2 
+$$
+
+$$
+Var(U^*) = Var(U) = 1 \\
+Var(V^*) = E[(V^*)^2] - E[V^*]^2 = E[(\rho U + \sqrt{1-\rho^2}V)^2] - E[\rho U + \sqrt{1-\rho^2}V]^2 = E[(\rho^2 U^2 + (1-\rho^2) V^2 + \rho U \sqrt{1-\rho^2}V)] - (\rho E[U] + \sqrt{1-\rho^2}E[V])^2 = \rho^2 E[U^2] + (1-\rho^2) E[V^2] + \rho \sqrt{1-\rho^2} E[U] E[V] = \rho^2 E[U^2] + (1-\rho) E[V^2] = \rho^2 (Var(U) + E[U]^2) + (1-\rho^2) (Var(V)+E[V]^2)=\rho^2(1+0)+ (1-\rho^2)(1+0)=\rho^2 + 1 - \rho^2=1 
+$$
+
+$$ 
+Corr(U^*, V^*) = \frac{E[(U^*-E[U^*])(V^*-E[V^*])]}{\sigma_{U^*}\sigma_{V^*}} = E[(U-E[U])(\rho U + \sqrt{1-\rho^2} V - \rho E[U] - \sqrt{1-\rho^2}E[V])] = 
+E[U(\rho U + \sqrt{1-\rho^2} V)] = \rho E[U^2] + \sqrt{1-\rho^2} E[U] E[V] = \rho E[U^2] = \rho(Var(U) + E[U]^2) = \rho (1 + 0) = \rho 
+$$
