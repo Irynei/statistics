@@ -1,15 +1,14 @@
 ---
 title: "Statistics | HW1"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
   word_document: default
 ---
 
 ```{r}
 # data preprocessing
-setwd('C:/Users/ibar/Desktop/UCU/Statistics/statistics/HW1/')
 ceodata <- read.csv('ceo.csv')
 ceodata$X <- NULL
 salary <- ceodata$salary
@@ -136,6 +135,7 @@ hist(salary, col="darkolivegreen3")
 hist(log(salary), col="tomato", main="Histogram of ln(salary)")
 ```
 
+Histogram of ln(salary)
 
 ```{r}
 boxplot(salary, main="Boxplot of salary",col="darkolivegreen3")
@@ -170,12 +170,18 @@ pearson_correlations = cor(ceodata, method="pearson")
 qplot(x=Var1, y=Var2, data=melt(pearson_correlations), fill=value, geom="tile") + scale_fill_gradient(low = "white", high = "red")
 ```
 
-
+Heatmap of Pearson correlations. The more bright red square, the bigger correlation.  
+For example, we can see that there are pretty strong correlation between sales and profits, which is very logical.  
+Note: Pearson correlation evaluates the linear relationship between two continuous variables.
 
 ### 2b
 ```{r}
 pairs(~salary + totcomp + tenure + age + sales + profits + assets, data=ceodata, main="CEO Scatterplot Matrix")
 ```
+
+Here we can see almost linear relationship between some variables, for instance sales and profits.  
+At the same time there are nonlinear correlations and no correlations.  
+So I think that for some variables linear correlation coefficients are appropriate here.  
 
 ```{r}
 spearman_correlation = cor(ceodata, method="spearman")
@@ -183,7 +189,18 @@ qplot(x=Var1, y=Var2, data=melt(spearman_correlation), fill=value, geom="tile") 
 
 ```
 
+Heatmap of Spearman correlations. 
+Here we can see more strong correlations between some variables than on heatmap using Pearson correlations.  
+This could happen because of nonlinear but monotonic relationship between variables.  
+For example, totcomp and salary or totcomp and profits.   
+Note: The Spearman correlation evaluates the monotonic relationship between two continuous variables. 
 
+```{r}
+sorted_salaries = sort(ceodata$salary)
+min(which(sorted_salaries==6000))
+```
+
+Min rank of salary=6000. 
 
 ### 2c
 
@@ -193,13 +210,23 @@ hist(salary[which(ceodata$age < 50)],  col="tomato", add=T)
 legend("topright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=3)
 ```
 
+Histograms of two groups: Age > 50 and Age < 50.  
+From this plot we can see that there are far less CEOs with age < 50 comparing to CEOs with age > 50.  
+
 ```{r}
 plot(ecdf(salary[which(ceodata$age > 50)]), col="darkolivegreen3", main="Salary ECDF for Age>50 and Age<50")
 plot(ecdf(salary[which(ceodata$age < 50)]), add=T, col="tomato")
 legend("bottomright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=5)
 ```
 
-## 3 Task
+ECDF plots of two groups: Age > 50 and Age < 50.  
+The distribution is pretty much the same for small salaries.  
+However, more CEO's with age > 50 get larger salaries. This can clearly be seen from ecdf plot.
+For example, let's took 0.95, we can see that 95% of CEOs > 50 years old get at most `r quantile(salary[which(ceodata$age > 50)], c(0.95))`   
+while 95% of CEOs < 50 years old get at most `r quantile(salary[which(ceodata$age < 50)], c(0.95))`  
+ 
+
+## Task 3
 
 ### 3a
 ```{r}
@@ -214,16 +241,22 @@ grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary)) >= 4000] <
 con_table <- xtabs(~age+salary, data=grouped_data)
 addmargins(con_table)
 ```
-Contigency table with absolute frequencies.
+
+Contigency table with absolute frequencies.  
+
 
 ```{r}
 con_table <- xtabs(~age+salary, data=grouped_data)
 addmargins(con_table / nrow(grouped_data))
 ```
-Contigency table with relative frequencies.
+
+Contigency table with relative frequencies.  
 
 ### 3b
 
+We can see that there are small amount of CEOs < 50 years old.  
+Also, CEOs < 50 years get smaller salary comparing to CEOs > 50 years.  
+We can see that there are 62 CEOs under 50 years and 52 of them have < 2000 salary.  
 
 ### 3c
 ```{r}
@@ -247,72 +280,64 @@ legend("topleft", legend=c("N(10,9) histogram", "N(10,9) density"),col=c("darkol
 
 ```
 
+We can see that density plot of N(10, 9) is pretty the same as hist of simulated N(10,9).  
+However, we have only 50 samples in simulated N(10, 9), so It's not really clear that simulated is normal distribution.  
+
+### 1b
+
 ```{r}
 set.seed(19)
 normal <- rnorm(100000, 10, 9)
-# simulated_t5 <- dt(x=sample(50), df=5)
 simulated_t5 <- rt(50, df=5)
-# simulated_t5 <- pt(sample(50), df=5)
 simulated_t5 <- 10 + 3 * sqrt(3 / 5) * simulated_t5
 hist(simulated_t5, col="darkolivegreen3", prob=TRUE, xlim = c(-5, 25), main="")
 lines(density(normal), col="tomato", lwd=2)
 legend("topleft", legend=c("transformed t5 hist", "N(10,9) density"),col=c("darkolivegreen3", "tomato"), lwd=3)
 ```
 
+Here we can see hist of transformed t5 distribution and density plot of N(10, 9).  
+It is obvious that transformed t5 has higher density that N(10, 9).  
+
+
+## Task 2
 
 ### 2a
+
 ```{r}
-set.seed(15)
-simulated <- rnorm(50, 10, 9)
-list <- c(simulated)
+set.seed(19)
+normal <- rnorm(50, 10, 9)
+list <- c(normal)
 p <- 49
 for (i in 0:49){
   list = c(list, 16 + i * (24 - 16)/p)
 }
-mean(simulated)
+mean(normal)
 mean(list)
-median(simulated)
+median(normal)
 median(list)
-var(simulated)
+var(normal)
 var(list)
-boxplot(simulated)
-boxplot(list)
+boxplot(normal, main="Normal")
+boxplot(list, main="Simulated with outliers")
 ```
+
+Here on boxplots we can clearly see the impact of adding outliers.  
+Median and mean become significantly larger.  
+Variance also changes significantly.  
+
 
 ### 2b, 2c, 2d
-Interactive graphics:
+Interactive graphics links:
 
 * [Boxplot animation](https://irynei.shinyapps.io/boxplot_animation/)  
-* [Histogram animation](https://irynei.shinyapps.io/hist_animation/)
+* [Histogram animation](https://irynei.shinyapps.io/hist_animation/)  
 
-```{r}
-# library(animation)
-# 
-# set.seed(15)
-# simulated <- rnorm(50, 10, 9)
+Here we can see how adding outliers changes location measures.  
 
-# saveGIF({
-#   for(i in 10:100){
-#     distribution = c(simulated, rnorm(i, 20, 4))
-#     hist(distribution)
-#     abline(v = mean(distribution),col = "royalblue",lwd = 2)
-#     abline(v = median(distribution),col = "red",lwd = 2)
-#     legend("topright", legend = c(i, "mean", "median"), fill = c("white", "royalblue", "red"), bty = "n")
-#       }
-# }, movie.name = "hist.gif", interval = 1, ani.width = 550, ani.height = 350)
-
-
-# saveGIF({
-#   for(i in 10:100){
-#     boxplot(c(simulated, rnorm(i, 20, 4)))
-#     legend("topright", legend = c(i), fill = c("red"), bty = "n")
-#       }
-# }, movie.name = "boxplot.gif", interval = 1, ani.width = 550, ani.height = 350)
-
-```
-
+## Task 3
 
 ### 3b
+
 ```{r}
 u <- rnorm(50, 0, 1)
 set.seed(10)
@@ -324,33 +349,28 @@ v <- p*u + sqrt(1 - p * p) * v
 
 ```
 
+### 3c
 
+```{r}
+set.seed(19)
+u <- rnorm(10000, 0, 1)
+set.seed(44)
+v <- rnorm(10000, 0, 1)
+p <- 0.75
+v_tansformed <- p * u + sqrt(1 - p^2) * v
+cor(data.frame(u, v_tansformed), method="pearson")
+cor(data.frame(u, v_tansformed), method="spearman")
+```
 
+Simulated U and V*. Pearson and Spearman correlation coefficients.  
 
+```{r}
+# exp transformation
+v_exp <- exp(v_tansformed)
+cor(data.frame(u, v_exp), method="pearson")
+cor(data.frame(u, v_exp), method="spearman")
 
-### 3a
+```
 
-
-
-
-$$ 
-U \sim N(0,1),\ V \sim N(0,1), \\
-U^*=U, V^*=\rho U + \sqrt{1-\rho^2} V
-$$
-
-Why?
-
-$$ 
-Var(X) = E[X^2] - E[X]^2 \\
-E[X^2]=Var(X) + E[X]^2 
-$$
-
-$$
-Var(U^*) = Var(U) = 1 \\
-Var(V^*) = E[(V^*)^2] - E[V^*]^2 = E[(\rho U + \sqrt{1-\rho^2}V)^2] - E[\rho U + \sqrt{1-\rho^2}V]^2 = E[(\rho^2 U^2 + (1-\rho^2) V^2 + \rho U \sqrt{1-\rho^2}V)] - (\rho E[U] + \sqrt{1-\rho^2}E[V])^2 = \rho^2 E[U^2] + (1-\rho^2) E[V^2] + \rho \sqrt{1-\rho^2} E[U] E[V] = \rho^2 E[U^2] + (1-\rho) E[V^2] = \rho^2 (Var(U) + E[U]^2) + (1-\rho^2) (Var(V)+E[V]^2)=\rho^2(1+0)+ (1-\rho^2)(1+0)=\rho^2 + 1 - \rho^2=1 
-$$
-
-$$ 
-Corr(U^*, V^*) = \frac{E[(U^*-E[U^*])(V^*-E[V^*])]}{\sigma_{U^*}\sigma_{V^*}} = E[(U-E[U])(\rho U + \sqrt{1-\rho^2} V - \rho E[U] - \sqrt{1-\rho^2}E[V])] = 
-E[U(\rho U + \sqrt{1-\rho^2} V)] = \rho E[U^2] + \sqrt{1-\rho^2} E[U] E[V] = \rho E[U^2] = \rho(Var(U) + E[U]^2) = \rho (1 + 0) = \rho 
-$$
+Here we can see that Spearman correlation coefficients remain unchanged and Pearson correlation coefficients changed.  
+This is because Spearman correlation is stable to transformations.  
