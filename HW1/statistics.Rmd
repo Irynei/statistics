@@ -3,10 +3,13 @@ title: "Statistics | HW1"
 output:
   html_document:
     df_print: paged
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r}
 # data preprocessing
+setwd('C:/Users/ibar/Desktop/UCU/Statistics/statistics/HW1/')
 ceodata <- read.csv('ceo.csv')
 ceodata$X <- NULL
 salary <- ceodata$salary
@@ -187,7 +190,7 @@ qplot(x=Var1, y=Var2, data=melt(spearman_correlation), fill=value, geom="tile") 
 ```{r}
 hist(salary[which(ceodata$age > 50)],  col="darkolivegreen3", main="Age>50 and Age<50 Histograms Of Salary", xlab = "Salary")
 hist(salary[which(ceodata$age < 50)],  col="tomato", add=T)
-legend("topright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=5)
+legend("topright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", "tomato"), lwd=3)
 ```
 
 ```{r}
@@ -200,9 +203,9 @@ legend("bottomright", legend=c("Age > 50", "Age < 50"),col=c("darkolivegreen3", 
 
 ### 3a
 ```{r}
-grouped_data = data.frame(salary=ceodata$salary, age=ceodata$age)
+grouped_data <- data.frame(salary=ceodata$salary, age=ceodata$age)
 # group data by categories 
-grouped_data$age = ifelse(grouped_data$age < 50, "a1", "a2")
+grouped_data$age <- ifelse(grouped_data$age < 50, "a1", "a2")
 grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary)) < 2000] <- "s1"
 grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary) >= 2000) & suppressWarnings(as.integer(grouped_data$salary)) < 4000] <- "s2"
 grouped_data$salary[suppressWarnings(as.integer(grouped_data$salary)) >= 4000] <- "s3"
@@ -235,26 +238,29 @@ chisq.test(con_table)
 ### 1a
 
 ```{r}
-set.seed(15)
+set.seed(19)
 simulated <- rnorm(50, 10, 9)
-normal <- rnorm(500000, 10, 9)
-hist(normal, col="darkolivegreen3")
-hist(simulated, col="tomato", add=T)
+normal <- rnorm(1000000, 10, 9)
+hist(simulated, col="darkolivegreen3",prob=TRUE, xlim=c(-40, 40), main="")
+lines(density(normal), col="tomato", lwd=2)
+legend("topleft", legend=c("N(10,9) histogram", "N(10,9) density"),col=c("darkolivegreen3", "tomato"), lwd=3)
 
-skewness(normal)
-a = density(simulated)
-plot(density(normal), col="darkolivegreen3")
-# lines(a, col="tomato")
 ```
 
 ```{r}
-a <- dt(x = sample(50), df=5)
-a <- 10 + 3 * sqrt(3 / 5) * a
-hist(a)
-density(a)
+set.seed(19)
+normal <- rnorm(100000, 10, 9)
+# simulated_t5 <- dt(x=sample(50), df=5)
+simulated_t5 <- rt(50, df=5)
+# simulated_t5 <- pt(sample(50), df=5)
+simulated_t5 <- 10 + 3 * sqrt(3 / 5) * simulated_t5
+hist(simulated_t5, col="darkolivegreen3", prob=TRUE, xlim = c(-5, 25), main="")
+lines(density(normal), col="tomato", lwd=2)
+legend("topleft", legend=c("transformed t5 hist", "N(10,9) density"),col=c("darkolivegreen3", "tomato"), lwd=3)
 ```
 
 
+### 2a
 ```{r}
 set.seed(15)
 simulated <- rnorm(50, 10, 9)
@@ -272,10 +278,12 @@ var(list)
 boxplot(simulated)
 boxplot(list)
 ```
-### 1b
 
-https://irynei.shinyapps.io/boxplot_animation/
-https://irynei.shinyapps.io/hist_animation/
+### 2b, 2c, 2d
+Interactive graphics:
+
+* [Boxplot animation](https://irynei.shinyapps.io/boxplot_animation/)  
+* [Histogram animation](https://irynei.shinyapps.io/hist_animation/)
 
 ```{r}
 # library(animation)
@@ -301,14 +309,10 @@ https://irynei.shinyapps.io/hist_animation/
 #       }
 # }, movie.name = "boxplot.gif", interval = 1, ani.width = 550, ani.height = 350)
 
-
-# u <- rnorm(50, 0, 1)
-# v <- rnorm(50, 0, 1)
-# p <- 0.7
-# v <- p*u + sqrt(1 - p * p) * v
 ```
 
 
+### 3b
 ```{r}
 u <- rnorm(50, 0, 1)
 set.seed(10)
@@ -324,7 +328,7 @@ v <- p*u + sqrt(1 - p * p) * v
 
 
 
-
+### 3a
 
 
 
