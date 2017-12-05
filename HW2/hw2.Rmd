@@ -1,0 +1,290 @@
+---
+title: "Statistics | HW2"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+# Problem 3: Linear regression analysis
+
+
+### Task 1
+
+
+```{r}
+data = read.csv('student-mat.csv',sep =";")
+data$G1 = NULL
+data$G2 = NULL
+```
+
+1) Mjob can have one of 5 values 'teacher', 'health', 'services', 'at_home' or 'other'.
+It's clear that Mjob is a nominal scale variable. If variable is nominal scaled, then we can only conclude about equality or inequality.
+For example, that Mjob='teacher' does not equal Mjob='health'. We can't order values.
+We can't include nominal scale variables into model, so we should include Mjob with dummies.  
+  A dummy variable takes the value one for some observations to
+indicate the presence of an effect or membership in a group and zero
+for the remaining observations. So, in case of Mjob, we can have 4 dummies: Mjob_teacher, Mjob_health, Mjob_services, Mjob_at_home.
+We should'n include dummy variables for all possible cases, beacause of colinearity of columns of matrix X.
+If all listed above dummies are equal to 0, that means that Mjob is 'other'.
+
+2) Goout variable can have numeric values from 1 to 5( 1 - very low to 5 - very high).
+We can see that goout is an ordinal variable, because we can naturally order the values.
+Since we can't provide a natural meaning of differences between two values, goout is not an interval scaled variable.
+For example, goout=1 is less than goout=2.
+We can include ordinal scale variables into model without dummies.
+
+All other nominal scale variables, such as Fjob, address, etc. should be included into model with dummies.
+
+
+### Task 2
+
+
+The only interval scaled variables that we have are absenses and age.  
+As we can see from scatter plot, absenses seem to have nonlinear impact on G3.  
+So, let's run RESET test to decide if we should include powers(2,3) of absenses and age into model.
+```{r}
+pairs(data$G3 ~ data$absences+data$age)
+```
+
+
+We want to tests whether non-linear combinations of the fitted values help explain the response variable.  
+As we can see, adding absences of power 2 and 3 will have significant influence. On the other hand, adding powers of age will not.
+```{r}
+library("lmtest")
+resettest(lm(G3~absences, data=data), power=2:3, type="fitted")
+resettest(lm(G3~age, data=data), power=2:3, type="fitted")
+```
+
+So, let's add absences2 and absences3 to our data.
+
+```{r}
+data$absences2 <- data$absences * data$absences
+data$absences3 <- data$absences * data$absences * data$absences
+```
+
+Let's look at y variable(G3). As we can see from histogram and measure of skewness,
+G3 is almost normally distributed with some left skeweness. There is no need to transform G3 variable.
+```{r}
+library(moments)
+hist(data$G3)
+cat("Measure of skeweness: ", skewness(data$G3))
+```
+
+
+### Task 3
+
+From this summary of linear regression we can see that some variables such as failures have extremely low p-value and therefore are very significant.  
+Coefficients that have p-value larger than 0.5 we consider as insignificant. We can also see estimated values for coefficients, std errors and t values.
+Our model has R-squared:  0.2965 and Adjusted R-squared:  0.2148.  
+In futher model selection we would look at adjusted R-squared, because R-squared increases if number of variables increases.
+
+```{r}
+g3.model <- lm(G3~., data=data)
+summary(g3.model)
+```
+
+
+As we can see from summary of lm, Fjob seems to be insignificant. So we need to check the simultaneous insignificance of all dummies.  
+For that we check linear hypothesis. H0 is that Fjobhealth, Fjobother, Fjobservices, Fjobteacher are simultaneously equal to zero.  
+As we can see the p-value is > 0.05, so do not reject the H0 hypothesis and can conclude that we all our dummies for Fjob are simultaneously insignificant.
+```{r}
+library("car")
+linearHypothesis(g3.model, c("Fjobother", "Fjobhealth", "Fjobservices", "Fjobteacher"))
+```
+
+### Task 4
+
+age coefficient: 0.-4181. That means for fixed other variables, if you are 1 year older than your G3 decreases on 0.4181.  
+Fjob is represented with dummy variables:
+Fjobother: 0.-5976   
+Fjobhealth: 0.2629.  
+Fjobservices: -2.721e-01
+Fjobteacher: 1.278e+0  
+This means, for example, for fixed other variables, If student's Fjob is health, he will have G3 by 0.2629 larger than comparing to having another Fjob.    
+goout coefficient: 0.-6469. That means for fixed other variables, if you have goout increased by 1, you will get G3 decreased by 0.-6469, which is very logical. The more you going out, the works marks you will have.
+
+
+### Task 5
+
+Confidence intervals for famsupyes and absences.  
+We can see that with probability of 95% coefficient for absences will be from 0.1489176 to 0.50483572. It means that increase in absences will increase G3(if other variables are fixed) which is kind of a strange.  
+We can see that with probability of 95% coefficient for famsupyes will be from -1.8134225 to 0.05061711. If confint containes 0, that means that variable if insignificant, because there is rather high probability for coefficient to be 0. If 0 is not in confint, that means, that variable is significant.(if we choose p-value threshold as 0.05 and take into account 95% confints)
+```{r}
+confint(g3.model, c("famsupyes", "absences"))
+```
+
+
+Here we can see plotted residuals, we can see that they are no patterns. 
+Also we can see from hist that residuals seems to follow normal distribution.  
+In addition we run a Kolmogorov-Smirnov test and see that our residuals follow normal distribution.  
+```{r}
+plot(resid(g3.model))
+hist(resid(g3.model))
+ks.test(resid(g3.model), mean(resid(g3.model)), sd(resid(g3.model)))
+```
+
+### Task 6
+
+Here we use stepwise model selection based on AIC.  
+AIC can be thought of goodness of fit minus complexity.   
+AIC estimates the quality of each model, relative to each of the other models.  
+On each step we calculate AIC for model, and AIC for pissible models as if we drop one variable.  
+Then we choose to drop coefficient that will lead to the smallest AIC. If we can't find smallest AIC - stop.
+```{r}
+selected_model <- step(g3.model)
+```
+
+
+For example, in the last step, farmsize was dropped, because It leads to model with AIC=1117.69.    
+After that dropping variables will not lead to smaller AIC and we should stop.  
+  
+Final Model:
+```{r}
+
+selected_model <- lm(formula = G3 ~ sex + age + address + Medu + Mjob + studytime + 
+    failures + schoolsup + famsup + romantic + goout + absences + 
+    absences2 + absences3, data = data)
+summary(selected_model)
+
+```
+
+
+
+### Task 7
+
+Let's compute Cook distance to check for outliers.  
+As we can see from plots, there are outlier - 277 row in data.  
+From examing data, we can suppose that 277 row contains extremely large absences.  
+```{r}
+plot(selected_model)
+plot(selected_model, which=c(4))
+# cooks.distance(selected_model)
+```
+
+This can clearly be seen from boxplot and regular plot of absences.  
+```{r}
+boxplot(data$absences)
+plot(data$absences)
+```
+
+### Task 8
+
+Randomly selecting 5 rows and delete age in them.  
+We can remove rows with missing data or try to simulate
+Next implement 3 methods of missing data imputation:  
+- generage age from values of age from other rows of data;  
+- replace missing age values with mean agea value;  
+- regress age on other variables.  
+Here you can see results:  
+```{r}
+set.seed(20)
+data_for_testing <- data
+
+random_5_rows <- data_for_testing[sample(nrow(data_for_testing), 5), ]
+
+cat("original age", random_5_rows$age, "\n")
+
+data_for_testing$age[as.numeric(rownames(random_5_rows))] = NA
+
+# 1 method
+generated_ages <- sample(data$age, 5)
+cat("Generated from typical age:", generated_ages, "\n")
+
+# 2 method
+mean_age <- round(mean(data$age))
+cat("mean age", mean_age, "\n")
+
+
+data_without_age <- data_for_testing[complete.cases(data_for_testing), ] 
+
+# 3 method
+age_model <- lm(age~.-G3, data=data_without_age)
+
+random_5_rows$age <- NULL
+
+a <- predict.lm(age_model, newdata = random_5_rows)
+cat("regressed age: ", round(a))
+
+```
+
+
+### Task 9
+
+
+Here we plot goout vs residuals to see if variance of the residuals is rather different for different values of goout.  
+Next we perform bartlett test that shows that variances are homogemeous (because p-value > 0.05), so our assumption about heteroscedasticity was wrong.
+```{r}
+plot(data$goout, resid(selected_model))
+boxplot(resid(selected_model) ~ data$goout)
+bartlett.test(resid(selected_model) ~ data$goout)
+```
+
+```{r}
+log.resid.squared <- log(selected_model$residuals ^ 2)
+model.s <- lm(formula = G3 ~ sex + age + address + Medu + Mjob + studytime + 
+    failures + schoolsup + famsup + romantic + goout + absences + 
+    absences2 + absences3, data = data)
+fgls <- lm(formula = G3 ~ sex + age + address + Medu + Mjob + studytime + 
+    failures + schoolsup + famsup + romantic + goout + absences + 
+    absences2 + absences3, data = data, weights = 1 / exp(model.s$fitted.values))
+summary(fgls)
+```
+
+
+### Task 10
+
+Next we compute the White estimator of covariance matrix of the OLS estimators.  
+Here we can see that std. errors for coefficients computed with White estimator are different, because White estimator takes into account heteroskedasticity.  
+So there we have heteroskedasticity-consistent standard errors.  
+If we have had heteroskedasticity in our model, we would have seen changes in variables significance.  
+```{r}
+library("sandwich")
+library("lmtest")
+new.model <-lm(formula = G3 ~ sex + age + address + Medu + Mjob + studytime + 
+    failures + schoolsup + famsup + romantic + goout + absences + 
+    absences2 + absences3, data = data)
+covWhite = vcovHC(new.model, type="HC")
+coeftest(new.model, vcov=covWhite)
+summary(selected_model)
+```
+
+
+### Task 11
+
+
+We created model that explains G3 based on different variables.  
+We can use It to predict G3.  
+The most significant variables are failures, absences, goout, studytime, romanticyes. To sum up, If you want excellent G3 you should have less failures, less go out, more studityme, do not have romantic relationships.  
+Variable absences is really interesting, because It looks like the more you have absences the better G3 will be. It can be due to the fact that realy smart people tend to miss the lessons, to have time to learn more.   
+```{r}
+summary(selected_model)
+```
+
+
+
+
+
+# Problem 4
+
+```{r}
+library("MASS")
+d1 <- sqrt(0.4)
+d2 <- sqrt(0.8)
+p <- 0.2
+T <- 100
+
+sigma <- matrix(c(d1*d1, d1*d2*p, d1*d2*p, d2*d2), nrow = 2, ncol = 2)
+xs <- mvrnorm(T, c(0,0), Sigma = sigma, empirical = TRUE)
+
+x1 <- xs[,1]
+x2 <- xs[,2]
+
+# cor(x1, x2, method = "pearson")
+
+u <- rnorm(T, 0, 1)
+
+acf(u)
+
+```
