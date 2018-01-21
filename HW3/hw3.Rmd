@@ -1,0 +1,160 @@
+---
+title: "Statistics | HW3"
+output: html_notebook
+---
+
+
+# Problem 3: Regression techniques
+
+```{r}
+library("glmnet")
+ceodata <- read.csv('ceo.csv')
+ceodata$X <- NULL
+head(ceodata)
+```
+
+## Task 1
+
+
+### 1a
+The idea of the lasso regression is to penalize the magnitude of coefficients of features along with minimizing squared residuals.  
+In lasso regression coefficients are penalized by adding ${\lambda\|\beta \|_{1}}$ to optimization objective.  
+${\lambda}$ is the parameter which balances how much coefficients should be penalized (e.g. if ${\lambda = 0}$ we get simple linear regression).  
+Lasso regression performes not only regularization, but also feature selection, because It can set some coefficients to zero.  
+Lasso uses L1 norm which is not differentiable at all points (e.g. for 1 dimention It is not differentialbe at origin).  
+Therefore, gradient descent can't be used (because gradient is not defined), instead coordinate descent is used as an optimization algorithm.  
+  
+Main benefit of lasso regression usage comparing to simle linear regression is when we have a huge number of features and want to get sparse solution (features with 0 coefficients can be ignored), because It's can be really hard to implement stepwise selection techniques in high dimensionality cases.
+
+### 1b 
+Lasso regression penalize by adding sum of absolute values of coefficients, that depend on the magnitude of each variable.  
+It is only reasonably to use this way of penalization when variables are scaled.
+
+### 1c
+```{r}
+set.seed(100)
+# scale and normalize data
+normalized.ceodata <- data.frame(scale(ceodata))
+normalized.ceodata
+x <- model.matrix(salary~.+0, normalized.ceodata)
+y <- normalized.ceodata$salary
+
+# cross validation for glmnet, used to choose lambda
+cv.lasso <- cv.glmnet(x, y, alpha=1);
+plot(cv.lasso)
+log(cv.lasso$lambda.min)
+coef(cv.lasso, s = "lambda.min")
+```
+Using cross validation, we obtained most efficient lambda = `r cv.lasso$lambda.min`.
+As can be seen from plot, using this lambda leads to having 4 non-zero coefficients.
+
+## Task 2
+
+
+### 2a
+```{r}
+cleaned.data <- ceodata[ceodata$profits > 0, ]
+
+log.profits <- log(cleaned.data$profits)
+log.sales <- log(cleaned.data$sales)
+
+lm.fitted <- lm(log.profits~log.sales)
+plot(log.sales, log.profits)
+abline(lm.fitted, col='tomato', lwd=1)
+```
+
+
+### 2b
+```{r}
+y <- log.profits
+x <- log.sales
+
+nls.fitted <- nls(y ~ b0 + b1 * x^b2, start=list(b0=0, b1=1, b2=2))
+y_hat <- predict(nls.fitted)
+summary(nls.fitted)
+
+```
+
+```{r}
+# plot linear vs nonlinear regression curves
+plot(log.sales, log.profits)
+lines(x, predict(lm.fitted), col='tomato', lwd=1)
+lines(x, predict(nls.fitted), col="green", lwd=1)
+legend("bottomright", legend=c("Nonlinear", "Linear"),col=c("green", "tomato"), lwd=1)
+```
+We can see on the plot that nonlinear regression curve coincides with linear one almost everywhere except  top right part.  
+
+```{r}
+loss.functions = function(x, x.hat)
+{
+  res = c(mean((x - x.hat) ^ 2), 
+          mean(abs(x - x.hat)), 
+          mean(abs((x - x.hat) / x )))
+  names(res) = c("MSE","MAE", "MAPE")
+  return(res);
+}
+# linear
+loss.functions(y, predict(lm.fitted))
+# nonlinear
+loss.functions(y, predict(nls.fitted))
+```
+MSE, MAE and MAPE errors for linear and nonlinear regression models.  
+We can see that errors for both models are pretty much the same, but nonlinear model is slightly better than linear.  
+
+### 2c
+TODO
+dependent variable does not have constant variance
+
+
+## Task 3
+
+### 3a
+TODO
+
+### 3b
+
+```{r}
+library("readxl")
+library("np")
+bw1 <- npregbw(log.profits ~ log.sales)
+bw1
+```
+Optimal bandwidth selection method: Least Squares Cross-Validation.
+
+```{r}
+bw2 <- npregbw(log.profits ~ log.sales, bwmethod="cv.aic")
+bw2
+```
+Optimal bandwidth selection method: Expected Kullback-Leibler Cross-Validation
+
+
+
+```{r}
+non.parametric.fitted <- npreg(bws = bw1)
+plot(log.sales, log.profits)
+lines(log.sales, predict(non.parametric.fitted), col='blue', lwd=1)
+```
+Here we use optimal bandwidth found by Least Squares Cross-Validation method.
+
+### 3c
+```{r}
+plot(log.sales, log.profits)
+# lines(log.sales, predict(lm.fitted), col='tomato', lwd=1)
+lines(log.sales, predict(non.parametric.fitted), col='blue', lwd=1)
+lines(log.sales, predict(nls.fitted), col="green", lwd=1)
+legend("bottomright", legend=c("Nonlinear", "Nonparametric"),col=c("green", "blue"), lwd=1)
+```
+We can see on the plot that nonlinear regression curve fits data better that nonlinear one.  
+
+
+```{r}
+# nonlinear
+loss.functions(log.profits, predict(nls.fitted))
+# nonparametric
+loss.functions(log.profits, predict(non.parametric.fitted))
+
+```
+MSE, MAE and MAPE errors for nonlinear and nonparametric regression models.  
+We can see that nonparametric model are better than nonlinear based on these errors.
+
+## Task 4
