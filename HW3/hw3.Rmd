@@ -44,6 +44,11 @@ cv.lasso <- cv.glmnet(x, y, alpha=1);
 plot(cv.lasso)
 log(cv.lasso$lambda.min)
 coef(cv.lasso, s = "lambda.min")
+
+# plot estimated parameters as functions of lambda
+library(plotmo)
+lasso <- glmnet(x, y, alpha=1)
+plot_glmnet(lasso)
 ```
 Using cross validation, we obtained most efficient lambda = `r cv.lasso$lambda.min`.
 As can be seen from plot, using this lambda leads to having 4 non-zero coefficients.
@@ -158,3 +163,70 @@ MSE, MAE and MAPE errors for nonlinear and nonparametric regression models.
 We can see that nonparametric model are better than nonlinear based on these errors.
 
 ## Task 4
+
+
+### 4a
+
+```{r}
+new.ceodata <- ceodata
+new.ceodata$salary = NULL
+new.ceodata$high.salary <- ifelse(ceodata$salary > 2000, 1, 0)
+
+logit.model <- glm(high.salary ~ ., family=binomial('logit'), data=new.ceodata)
+summary(logit.model)
+optimal.logit.model <- suppressWarnings(step(logit_model, direction = "backward"))
+summary(optimal.logit.model)
+```
+
+
+```{r}
+coef(optimal.logit.model)
+exp(coef(optimal.logit.model))
+```
+Assuming fixed totcomp, tenure, profits and assests, odds will change by 1.00004085, so increase a little bit. so probability of getting
+
+
+
+```{r}
+
+random_5_rows <- ceodata[sample(nrow(new.ceodata), 5), ]
+random_5_rows$high_salary_hat <- predict(optimal.logit.model, newdata = random_5_rows, type = "response")
+random_5_rows
+```
+
+### 4d
+```{r}
+threshold <- 0.5
+table(optimal.logit.model$y, fitted(optimal.logit.model)>threshold)
+
+library(caret)
+conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>threshold,1,0), optimal.logit.model$y, positive = "1")
+
+# sensitivity specificity
+conf.matr$byClass[c(1,2)]
+
+```
+
+
+```{r}
+library(pROC)
+library("verification")
+roc.plot(optimal.logit.model$y, fitted(optimal.logit.model), )
+roc = roc(predictor = fitted(optimal.logit.model),response = optimal.logit.model$y)
+plot(roc, print.auc=TRUE)
+new.threshold = coords(roc, "best",ret="threshold")
+new.threshold
+```
+
+
+```{r}
+table(optimal.logit.model$y, fitted(optimal.logit.model)>new.threshold)
+
+library(caret)
+conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>new.threshold,1,0), optimal.logit.model$y, positive = "1")
+
+# sensitivity specificity
+conf.matr$byClass[c(1,2)]
+
+```
+
