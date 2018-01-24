@@ -204,7 +204,6 @@ conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>threshold,1,0), o
 
 # sensitivity specificity
 conf.matr$byClass[c(1,2)]
-
 ```
 
 
@@ -229,4 +228,20 @@ conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>new.threshold,1,0
 conf.matr$byClass[c(1,2)]
 
 ```
+
+
+## Task 5
+
+### 5a
+
+```{r}
+library("tree")
+library("rpart")
+library("RColorBrewer")
+library("rattle")
+rpart.ceo = rpart(salary ~ .,data=ceodata,control=rpart.control(cp = 0.01, xval = 10))
+fancyRpartPlot(rpart.ceo)
+printcp(rpart.ceo)
+```
+
 
