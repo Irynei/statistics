@@ -1,6 +1,10 @@
 ---
 title: "Statistics | HW3"
-output: html_notebook
+output:
+  pdf_document:
+    latex_engine: xelatex 
+  html_document:
+    df_print: paged
 ---
 
 
@@ -35,7 +39,7 @@ It is only reasonably to use this way of penalization when variables are scaled.
 set.seed(100)
 # scale and normalize data
 normalized.ceodata <- data.frame(scale(ceodata))
-normalized.ceodata
+head(normalized.ceodata)
 x <- model.matrix(salary~.+0, normalized.ceodata)
 y <- normalized.ceodata$salary
 
@@ -45,13 +49,18 @@ plot(cv.lasso)
 log(cv.lasso$lambda.min)
 coef(cv.lasso, s = "lambda.min")
 
+```
+
+Using cross validation, we obtained most efficient lambda = `r cv.lasso$lambda.min`.
+As can be seen from plot, using this lambda leads to having 4 non-zero coefficients.
+
+```{r}
 # plot estimated parameters as functions of lambda
 library(plotmo)
 lasso <- glmnet(x, y, alpha=1)
 plot_glmnet(lasso)
 ```
-Using cross validation, we obtained most efficient lambda = `r cv.lasso$lambda.min`.
-As can be seen from plot, using this lambda leads to having 4 non-zero coefficients.
+Plot of estimated parameters as functions of lambda
 
 ## Task 2
 
@@ -87,7 +96,7 @@ lines(x, predict(lm.fitted), col='tomato', lwd=1)
 lines(x, predict(nls.fitted), col="green", lwd=1)
 legend("bottomright", legend=c("Nonlinear", "Linear"),col=c("green", "tomato"), lwd=1)
 ```
-We can see on the plot that nonlinear regression curve coincides with linear one almost everywhere except  top right part.  
+We can see on the plot that nonlinear regression curve coincides with linear one almost everywhere except top right part.  
 
 ```{r}
 loss.functions = function(x, x.hat)
@@ -114,14 +123,19 @@ dependent variable does not have constant variance
 ## Task 3
 
 ### 3a
-TODO
+In Nadaraya–Watson regression function m is defined as: ${\displaystyle {\widehat {m}}_{h}(x)={\frac {\sum _{i=1}^{n}K_{h}(x-x_{i})y_{i}}{\sum _{j=1}^{n}K_{h}(x-x_{j})}}}$,   
+where $K_{h}$ is a kernel with a bandwidth h.  
+Bandwidth is a bias-variance tradeoff.  
+If we choose too large bandwidth, we get oversmoothed regression line and hence underfitting.  
+If we choose too small bandwidth, we get undersmoothed regression line and hence overfitting.   
+
 
 ### 3b
 
 ```{r}
 library("readxl")
 library("np")
-bw1 <- npregbw(log.profits ~ log.sales)
+bw1 <- suppressWarnings(npregbw(log.profits ~ log.sales))
 bw1
 ```
 Optimal bandwidth selection method: Least Squares Cross-Validation.
@@ -139,6 +153,7 @@ non.parametric.fitted <- npreg(bws = bw1)
 plot(log.sales, log.profits)
 lines(log.sales, predict(non.parametric.fitted), col='blue', lwd=1)
 ```
+  
 Here we use optimal bandwidth found by Least Squares Cross-Validation method.
 
 ### 3c
@@ -149,7 +164,7 @@ lines(log.sales, predict(non.parametric.fitted), col='blue', lwd=1)
 lines(log.sales, predict(nls.fitted), col="green", lwd=1)
 legend("bottomright", legend=c("Nonlinear", "Nonparametric"),col=c("green", "blue"), lwd=1)
 ```
-We can see on the plot that nonlinear regression curve fits data better that nonlinear one.  
+We can see on the plot that nonparametric regression curve fits data better that nonlinear one.  
 
 
 ```{r}
@@ -160,7 +175,7 @@ loss.functions(log.profits, predict(non.parametric.fitted))
 
 ```
 MSE, MAE and MAPE errors for nonlinear and nonparametric regression models.  
-We can see that nonparametric model are better than nonlinear based on these errors.
+We can see that nonparametric model are better than nonlinear based on these errors.  
 
 ## Task 4
 
@@ -172,39 +187,58 @@ new.ceodata <- ceodata
 new.ceodata$salary = NULL
 new.ceodata$high.salary <- ifelse(ceodata$salary > 2000, 1, 0)
 
-logit.model <- glm(high.salary ~ ., family=binomial('logit'), data=new.ceodata)
+logit.model <- suppressWarnings(glm(high.salary ~ ., family=binomial('logit'), data=new.ceodata))
 summary(logit.model)
-optimal.logit.model <- suppressWarnings(step(logit_model, direction = "backward"))
+optimal.logit.model <- suppressWarnings(step(logit.model, direction = "both"))
 summary(optimal.logit.model)
 ```
-
+Stepwise model selection using AIC as criterion.  
 
 ```{r}
 coef(optimal.logit.model)
 exp(coef(optimal.logit.model))
 ```
-Assuming fixed totcomp, tenure, profits and assests, odds will change by 1.00004085, so increase a little bit. so probability of getting
+Assuming fixed totcomp, tenure, profits and assests, if sales increse by 1, odds will increase by 1.00004085.
+So probability of getting high salary will increase a litte bit.
 
 
 
 ```{r}
-
+set.seed(100)
 random_5_rows <- ceodata[sample(nrow(new.ceodata), 5), ]
 random_5_rows$high_salary_hat <- predict(optimal.logit.model, newdata = random_5_rows, type = "response")
 random_5_rows
+
+z <- -2.366660e+00 + 7.744820e-05 * 2317 + 3.233620e-02 * 2 + 4.084836e-05 * 10553.0	+ 4.457237e-04 * (-633.0) + 6.394663e-06 *  29374.0	
+p <- 1/(1 + exp(-z))
 ```
+formula: (calculated for first item)  
+zi = $β_0 + β_1X_{1i} + · · · + β_kX_{ki}$  
+$P(Y_i = 1|X_i) = \frac {1}{1 + e ^{−z_i}}$
+$P = $ `r p`
 
 ### 4d
 ```{r}
 threshold <- 0.5
 table(optimal.logit.model$y, fitted(optimal.logit.model)>threshold)
+```
+Classification table.  
+From classification table we can see that only (284 + 62) / 447  = `r ((284 + 62) / 447) * 100` % predicted correctly.     
+18 CEOs had low salary, but our model predicted high salary for them and 83 CEOs had high salary, but model predicted low salary for them.  
 
+```{r}
 library(caret)
 conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>threshold,1,0), optimal.logit.model$y, positive = "1")
 
 # sensitivity specificity
 conf.matr$byClass[c(1,2)]
 ```
+Sensitivity and specifity.  
+Sensitivity - fraction of correctly classified 1 values (high salaries) among all CEOs which have high salary.  
+Specifity - fraction of correctly classified 0 values (low salaries) among all CEOs which have low salary.  
+So, only 42% of CEOs with high salary are classified as CEOs with high salary.  
+Our model is really good at predicting CEOs with low salary (94% of CEOs with low salary are classified as CEOs with low salary),  
+and really bad at predicting CEOs with high salary. So we need to find new optimal threashold.  
 
 
 ```{r}
@@ -214,34 +248,90 @@ roc.plot(optimal.logit.model$y, fitted(optimal.logit.model), )
 roc = roc(predictor = fitted(optimal.logit.model),response = optimal.logit.model$y)
 plot(roc, print.auc=TRUE)
 new.threshold = coords(roc, "best",ret="threshold")
-new.threshold
 ```
-
+Tow ROC curve plots from different libraries. Optimal treshold - `r new.threshold`.
 
 ```{r}
 table(optimal.logit.model$y, fitted(optimal.logit.model)>new.threshold)
+```
+Recomputed classification table with optimal threshold.  
+From classification table we can see that only (200 + 117) / 447 = `r ((200 + 117) / 447) * 100` % predicted correctly.  
+102 CEOs had low salary, but our model predicted high salary for them and 28 CEOs had high salary, but model predicted low salary for them. 
 
+```{r}
 library(caret)
 conf.matr = confusionMatrix(ifelse(fitted(optimal.logit.model)>new.threshold,1,0), optimal.logit.model$y, positive = "1")
 
 # sensitivity specificity
 conf.matr$byClass[c(1,2)]
-
 ```
+Sensitivity and specifity with new threshold.  
+Here we can see that or model is significantly better at predicting CEOs with high salary and a little bit worse at predicting CEOs with low salary.  
+So we obtained sensitivity and specifity both as high as possible, and improved our model.  
 
 
 ## Task 5
 
 ### 5a
+Assume the first variable to be used for splitting is assets.  
+We want to find such splitting point $s$, that this expression $\sum_{i:x_i\in R_1(j,s)} {(y_i-\hat{y}_{R_1} )}^2 + \sum_{i:x_i\in R_2(j,s)} {(y_i-\hat{y}_{R_2} )}^2$
+is minimal.  
+Where $\hat{y}_{R_1}$ and $\hat{y}_{R_2}$ are averages in $R_1$ and $R_2$.
+So the idea is to find such spilling point $s$ that mimimizes kind of a variance in both of obtained rectangulars.  
 
+If we find first splitting point, we continue this procedure in obtained rectangulars recursively.  
+
+
+### 5b
 ```{r}
 library("tree")
 library("rpart")
 library("RColorBrewer")
 library("rattle")
-rpart.ceo = rpart(salary ~ .,data=ceodata,control=rpart.control(cp = 0.01, xval = 10))
-fancyRpartPlot(rpart.ceo)
+rpart.ceo = rpart(salary ~ .,data=ceodata,control=rpart.control(cp = 0.001))
 printcp(rpart.ceo)
+
 ```
+Summary of regression tree.  This tree has 19 splittings.
+Now, let's prune It to have at most 10 splits.
+For this step I use complexity parameter equals to $0.001$ in order to not have too many splits.  
+As we can see from table, in order to get 10 splits, we need to use complexity parameter equals to 0.0052976.  
+
+```{r}
+rpart.ceo.prunned = prune(rpart.ceo, cp = 0.0052976)
+fancyRpartPlot(rpart.ceo.prunned)
+```
+Here we can see prunned tree with 10 splits.  
+Intensity of green color in nodes means value of salary: the more intense node color, the larger salary.  
+
+```{r}
+rsq.rpart(rpart.ceo.prunned)
+```
+Plolt of approximate R-squared and relative error for 10 spilts.  
+We can see that after first split relative error drops a lot, after next splits relative error does not change that much.  
+
+```{r}
+rpart.ceo.prunned$method
+```
+I used rpart function for prunning. It used ANOVA (Analysis of variances) method.  
+*from documentation:*
+The splitting criteria is $SS_T - (SS_L + SS_R)$, where $SS_T = \sum {(y_i-\bar{y})}^2$ is the sum of
+squares for the node, and $SS_R$, $SS_L$ are the sums of squares for the right and left son,
+respectively. This is equivalent to choosing the split to maximize the between-groups
+sum-of-squares in a simple analysis of variance.  
 
 
+### 5c
+
+Tree pruning: 
+$$R_{\alpha}(T) = \frac {1}{\sum_{i} {(y_i-\bar{y} )}^2} \sum_{m=1}^{|T|}\sum_{i:x_i \in R_m } {(y_i-\hat{y}_{R_m} )}^2 +\alpha|T| $$
+where $|T|$ is the number of terminal nodes in a tree and $\alpha$ is the complexity parameter.  
+
+Key properties for CARTs that guarantees that prunning using a single complexity parameter works.  
+1) For given $\alpha$ it is possible to determine the tree $T(\alpha)$ with the smallest $R_{\alpha}(T)$ unique.  
+2) If $\alpha$ >$\beta$then $T(\alpha)$ = $T(\beta)$ or $T(\alpha)$ is a strict subtree of $T(\beta)$.  
+The sequence of trees $T_0$ (no splits) to $T_m$ (m splits) uniquely determines the sequence of possible $\alpha$’s.  
+
+So, on every splitting step, we define alpha (this can be observed above in summary tables).  
+And every prunned tree is a subtree of original one.  
+That's why using a single complexity parameter for pruning works.  
